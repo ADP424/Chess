@@ -3,20 +3,21 @@ from chess import *
 
 # the height and width of the window to draw onto
 WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_HEIGHT = 650
 
 # the combined border size around the chess board
 # (ex. a border size of 100 means 50px borders above, below, left, and right of the board)
-WINDOW_BORDERS = 100
+WINDOW_BORDERS = 150
 
-# tile colors
+# colors
 EVEN_TILE_COLOR = color_rgb(255, 255, 255)
 ODD_TILE_COLOR = color_rgb(75, 10, 10)
 HIGHLIGHT_TILE_COLOR = color_rgb(255, 227, 122)
+BACKGROUND_COLOR = color_rgb(100, 100, 100)
 
 # create the chess window and make the background grey
 win = GraphWin("Chess", WINDOW_WIDTH, WINDOW_HEIGHT, False)
-win.setBackground(color_rgb(25, 25, 25))
+win.setBackground(BACKGROUND_COLOR)
 
 def create_tile_board(chess_board: ChessBoard) -> list:
     """
@@ -121,33 +122,67 @@ def create_piece_board(tile_board: list, chess_board: ChessBoard) -> list:
             
     return piece_board
 
-def get_clicked_piece_coords(point: Point, chess_board: ChessBoard):
-    """ 
-    Find the coordinates of the tile that was clicked, based on the tile size.
+def create_captured_pieces_rows(chess_board: ChessBoard):
+    """
+    Create image rows for both the black and white captured pieces, based on `captured_pieces` from the chess board.
 
     Parameters
     ----------
-    point : Point
-        The mouse point to check the position of.
-
     chess_board : ChessBoard
-        The game object representation of the board holding the tile information.
+        The chess board with the captured pieces information in it.
 
     Returns
     -------
     tuple
-        The row and column of the tile that was clicked, in the form (row, col).
-
-    Notes
-    -----
-    The row and column values are calculated by taking the point's x and y coordinates, subtracting the window borders, and dividing by the tile size.
+        A tuple of two lists, the first with the black pieces captured by white, and the second with the white pieces captured by black.
     """
 
+    print(chess_board.captured_pieces)
     tile_size = min((WINDOW_HEIGHT - WINDOW_BORDERS) / chess_board.board_height, (WINDOW_WIDTH - WINDOW_BORDERS) / chess_board.board_width)
-    row = (point.getY() - (WINDOW_HEIGHT - tile_size * chess_board.board_height) / 2) // tile_size
-    col = (point.getX() - (WINDOW_WIDTH - tile_size * chess_board.board_width) / 2) // tile_size
 
-    return (int(row), int(col))
+    # create a list of images for the captured black and white pieces
+    captured_by_white = []
+    captured_by_black = []
+
+    for captured_piece in chess_board.captured_pieces:
+
+        img_name = "images/"
+
+        if captured_piece.color == Color.BLACK:
+            img_name += "black-"
+        elif captured_piece.color == Color.WHITE:
+            img_name += "white-"
+
+        if captured_piece.piece == Piece.PAWN:
+            img_name += "pawn"
+        elif captured_piece.piece == Piece.KNIGHT:
+            img_name += "knight"
+        elif captured_piece.piece == Piece.BISHOP:
+            img_name += "bishop"
+        elif captured_piece.piece == Piece.ROOK:
+            img_name += "rook"
+        elif captured_piece.piece == Piece.QUEEN:
+            img_name += "queen"
+        elif captured_piece.piece == Piece.KING:
+            img_name += "king"
+
+        img_name += ".png"
+
+        # if the piece was captured by white, add it to the list of pieces captured by white
+        if captured_piece.captured_by.color == Color.WHITE:
+            captured_by_white.append(
+                Image(Point((WINDOW_WIDTH - tile_size * chess_board.board_width) / 2 + (tile_size / 2) * len(captured_by_white) + tile_size / 3, 
+                            (tile_size * chess_board.board_height) + WINDOW_BORDERS * 0.75), 
+                            img_name, int(tile_size) / 1.5, int(tile_size) / 1.5))
+            
+        # if the piece was captured by black, add it to the list of pieces captured by black
+        elif captured_piece.captured_by.color == Color.BLACK:
+            captured_by_black.append(
+                Image(Point((WINDOW_WIDTH - tile_size * chess_board.board_width) / 2 + (tile_size / 2) * len(captured_by_black) + tile_size / 3, 
+                            (WINDOW_HEIGHT - tile_size * chess_board.board_height) / 2 - WINDOW_BORDERS / 4), 
+                            img_name, int(tile_size) / 1.5, int(tile_size) / 1.5))
+    
+    return captured_by_white, captured_by_black
 
 def draw_tile_board(tile_board: list):
     """
@@ -175,6 +210,20 @@ def draw_piece_board(piece_board: list):
 
     for row in piece_board:
         for piece in row:
+            piece.draw(win)
+
+def draw_captured_pieces(captured_pieces: tuple):
+    """
+    Draw all the given captured pieces onto the window.
+
+    Parameters
+    ----------
+    captured_pieces: tuple
+        A tuple of all the captured pieces lists to draw.
+    """
+
+    for captured_piece_list in captured_pieces:
+        for piece in captured_piece_list:
             piece.draw(win)
 
 def clear_board_highlights(tile_board: list):
@@ -210,12 +259,56 @@ def reset_piece_board(piece_board: list):
         for piece in row:
             piece.undraw()
 
+def reset_captured_pieces(captured_pieces: tuple):
+    """
+    Undraw all pieces in all captured_pieces lists.
+
+    Parameters
+    ----------
+    captured_pieces : tuple
+        A tuple of all the captured piece lists to undraw.
+    """
+
+    for captured_piece_list in captured_pieces:
+        for piece in captured_piece_list:
+            piece.undraw()
+
+def get_clicked_piece_coords(point: Point, chess_board: ChessBoard):
+    """ 
+    Find the coordinates of the tile that was clicked, based on the tile size.
+
+    Parameters
+    ----------
+    point : Point
+        The mouse point to check the position of.
+
+    chess_board : ChessBoard
+        The game object representation of the board holding the tile information.
+
+    Returns
+    -------
+    tuple
+        The row and column of the tile that was clicked, in the form (row, col).
+
+    Notes
+    -----
+    The row and column values are calculated by taking the point's x and y coordinates, subtracting the window borders, and dividing by the tile size.
+    """
+
+    tile_size = min((WINDOW_HEIGHT - WINDOW_BORDERS) / chess_board.board_height, (WINDOW_WIDTH - WINDOW_BORDERS) / chess_board.board_width)
+    row = (point.getY() - (WINDOW_HEIGHT - tile_size * chess_board.board_height) / 2) // tile_size
+    col = (point.getX() - (WINDOW_WIDTH - tile_size * chess_board.board_width) / 2) // tile_size
+
+    return (int(row), int(col))
+
 # set up the initial boardstate and draw it into the window
 chess_board = ChessBoard()
 tile_board = create_tile_board(chess_board)
 piece_board = create_piece_board(tile_board, chess_board)
+captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
 draw_tile_board(tile_board)
 draw_piece_board(piece_board)
+draw_captured_pieces((captured_by_white, captured_by_black))
 
 # loop until the game is over
 game_running = True
@@ -253,5 +346,10 @@ while game_running:
     reset_piece_board(piece_board)
     piece_board = create_piece_board(tile_board, chess_board)
     draw_piece_board(piece_board)
+
+    # redraw the captured pieces
+    reset_captured_pieces((captured_by_white, captured_by_black))
+    captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+    draw_captured_pieces((captured_by_white, captured_by_black))
     
 # win.close()

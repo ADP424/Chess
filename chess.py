@@ -1,10 +1,6 @@
 import copy
 from enum import Enum
 
-#########################################################################################################################################################################
-################################################################################ CLASSES ################################################################################
-#########################################################################################################################################################################
-
 class Piece(Enum):
     EMPTY = 0
     PAWN = 1 # yes, I know pawns aren't pieces
@@ -39,12 +35,16 @@ class ChessPiece:
     
     color : Color, default: Color.NONE
         The color of the player who controls the piece (i.e. white, black).
+
+    captured_by : ChessPiece, default: None
+        The chess piece that captured this piece.
     """
 
-    def __init__(self, piece=Piece.EMPTY, color=Color.NONE):
+    def __init__(self, piece=Piece.EMPTY, color=Color.NONE, captured_by=None):
         self.piece = piece
         self.color = color
         self.has_moved = False
+        self.captured_by = captured_by
 
 class Move:
     """
@@ -596,6 +596,7 @@ class ChessBoard:
 
             # if a piece was captured, add it to the captured pieces list and set its spot to empty
             if move.captured_piece.piece != Piece.EMPTY:
+                move.captured_piece.captured_by = self.board[move.from_location[0]][move.from_location[1]]
                 self.captured_pieces.append(copy.deepcopy(move.captured_piece))
                 self.board[move.capture_location[0]][move.capture_location[1]] = ChessPiece()
     
