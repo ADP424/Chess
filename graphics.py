@@ -401,12 +401,6 @@ class GraphWin(tk.Canvas):
             item.undraw()
             item.draw(self)
         self.update()
-
-    def wait(self):
-        """
-        Just wait
-        """
-        time.sleep(.5) # give up thread
         
                       
 class Transform:
