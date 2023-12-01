@@ -1,5 +1,7 @@
+from time import sleep
 from graphics import *
 from chess import *
+from chess_bots import *
 
 # the height and width of the window to draw onto
 WINDOW_WIDTH = 800
@@ -137,7 +139,6 @@ def create_captured_pieces_rows(chess_board: ChessBoard):
         A tuple of two lists, the first with the black pieces captured by white, and the second with the white pieces captured by black.
     """
 
-    print(chess_board.captured_pieces)
     tile_size = min((WINDOW_HEIGHT - WINDOW_BORDERS) / chess_board.board_height, (WINDOW_WIDTH - WINDOW_BORDERS) / chess_board.board_width)
 
     # create a list of images for the captured black and white pieces
@@ -301,55 +302,201 @@ def get_clicked_piece_coords(point: Point, chess_board: ChessBoard):
 
     return (int(row), int(col))
 
-# set up the initial boardstate and draw it into the window
-chess_board = ChessBoard()
-tile_board = create_tile_board(chess_board)
-piece_board = create_piece_board(tile_board, chess_board)
-captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
-draw_tile_board(tile_board)
-draw_piece_board(piece_board)
-draw_captured_pieces((captured_by_white, captured_by_black))
+def two_humans_game():
+    """ 
+    Create and run a two player game where both players are controlled by humans.
+    """
 
-# loop until the game is over
-game_running = True
-while game_running:
-    
-    # get tile the user clicked until it's a piece that has moves
-    legal_moves = []
-    while len(legal_moves) == 0:
+    # set up the initial boardstate and draw it into the window
+    chess_board = ChessBoard()
+    tile_board = create_tile_board(chess_board)
+    piece_board = create_piece_board(tile_board, chess_board)
+    captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+    draw_tile_board(tile_board)
+    draw_piece_board(piece_board)
+    draw_captured_pieces((captured_by_white, captured_by_black))
+
+    # loop until the game is over
+    game_running = True
+    while game_running:
+        
+        # get tile the user clicked until it's a piece that has moves
+        legal_moves = []
+        while len(legal_moves) == 0:
+            clicked_point = win.getMouse()
+            clicked_tile = get_clicked_piece_coords(clicked_point, chess_board)
+
+            # get all possible moves at that location and highlight them, based on whose turn it is
+            if Color(chess_board.curr_player) == chess_board.board[clicked_tile[0]][clicked_tile[1]].color:
+                legal_moves = chess_board.find_legal_moves(clicked_tile[0], clicked_tile[1])
+                for move in legal_moves:
+                    tile_board[move.to_location[0]][move.to_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+
+        # get next tile the user clicked
         clicked_point = win.getMouse()
         clicked_tile = get_clicked_piece_coords(clicked_point, chess_board)
 
-        # get all possible moves at that location and highlight them, based on whose turn it is
-        if Color(chess_board.curr_player) == chess_board.board[clicked_tile[0]][clicked_tile[1]].color:
-            legal_moves = chess_board.find_legal_moves(clicked_tile[0], clicked_tile[1])
-            for move in legal_moves:
-                tile_board[move.to_location[0]][move.to_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+        # if that tile was in the list of moves, make that move
+        for move in legal_moves:
+            if move.to_location == clicked_tile:
+                chess_board.make_move(move)
 
-    # get next tile the user clicked
-    clicked_point = win.getMouse()
-    clicked_tile = get_clicked_piece_coords(clicked_point, chess_board)
+                # if the captured piece was a king, end the game
+                if move.captured_piece.piece == Piece.KING:
+                    game_running = False
 
-    # if that tile was in the list of moves, make that move
-    for move in legal_moves:
-        if move.to_location == clicked_tile:
+        # remove highlights
+        clear_board_highlights(tile_board)
+
+        # redraw the board
+        reset_piece_board(piece_board)
+        piece_board = create_piece_board(tile_board, chess_board)
+        draw_piece_board(piece_board)
+
+        # redraw the captured pieces
+        reset_captured_pieces((captured_by_white, captured_by_black))
+        captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+        draw_captured_pieces((captured_by_white, captured_by_black))
+        
+    win.close()
+
+def one_human_one_bot_game(bot: ChessBot):
+    """ 
+    Create and run a two player game where one player is a human and one player is a bot.
+    """
+
+    # set up the initial boardstate and draw it into the window
+    chess_board = ChessBoard()
+    bot.chess_board = chess_board
+    tile_board = create_tile_board(chess_board)
+    piece_board = create_piece_board(tile_board, chess_board)
+    captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+    draw_tile_board(tile_board)
+    draw_piece_board(piece_board)
+    draw_captured_pieces((captured_by_white, captured_by_black))
+
+    # loop until the game is over
+    game_running = True
+    while game_running:
+
+        # if it's the bot's turn, make a move for the bot
+        if Color(chess_board.curr_player) == bot.color:
+
+            # get a move based on the bot's behavior and make it
+            move = bot.get_move()
             chess_board.make_move(move)
 
             # if the captured piece was a king, end the game
             if move.captured_piece.piece == Piece.KING:
                 game_running = False
 
-    # remove highlights
-    clear_board_highlights(tile_board)
+        # else, let the player make the move
+        else:
+        
+            # get tile the user clicked until it's a piece that has moves
+            legal_moves = []
+            while len(legal_moves) == 0:
+                clicked_point = win.getMouse()
+                clicked_tile = get_clicked_piece_coords(clicked_point, chess_board)
 
-    # redraw the board
-    reset_piece_board(piece_board)
+                # get all possible moves at that location and highlight them, based on whose turn it is
+                if Color(chess_board.curr_player) == chess_board.board[clicked_tile[0]][clicked_tile[1]].color:
+                    legal_moves = chess_board.find_legal_moves(clicked_tile[0], clicked_tile[1])
+                    for move in legal_moves:
+                        tile_board[move.to_location[0]][move.to_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+
+            # get next tile the user clicked
+            clicked_point = win.getMouse()
+            clicked_tile = get_clicked_piece_coords(clicked_point, chess_board)
+
+            # if that tile was in the list of moves, make that move
+            for move in legal_moves:
+                if move.to_location == clicked_tile:
+                    chess_board.make_move(move)
+
+                    # if the captured piece was a king, end the game
+                    if move.captured_piece.piece == Piece.KING:
+                        game_running = False
+
+        # remove highlights
+        clear_board_highlights(tile_board)
+
+        # highlight the tile where the last move was made
+        tile_board[move.to_location[0]][move.to_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+
+        # redraw the board
+        reset_piece_board(piece_board)
+        piece_board = create_piece_board(tile_board, chess_board)
+        draw_piece_board(piece_board)
+
+        # redraw the captured pieces
+        reset_captured_pieces((captured_by_white, captured_by_black))
+        captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+        draw_captured_pieces((captured_by_white, captured_by_black))
+        
+    win.close()
+
+def two_bots_game(bot1: ChessBot, bot2: ChessBot):
+    """ 
+    Create and run a two player game where both players are bots.
+    """
+
+    # set up the initial boardstate and draw it into the window
+    chess_board = ChessBoard()
+    bot1.chess_board = chess_board
+    bot2.chess_board = chess_board
+    tile_board = create_tile_board(chess_board)
     piece_board = create_piece_board(tile_board, chess_board)
-    draw_piece_board(piece_board)
-
-    # redraw the captured pieces
-    reset_captured_pieces((captured_by_white, captured_by_black))
     captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+    draw_tile_board(tile_board)
+    draw_piece_board(piece_board)
     draw_captured_pieces((captured_by_white, captured_by_black))
-    
-# win.close()
+
+    # loop until the game is over
+    game_running = True
+    while game_running:
+
+        # advance the turn when the user hits a key on their keyboard
+        win.getKey()
+
+        # if it's the first bot's turn, make a move for it
+        if Color(chess_board.curr_player) == bot1.color:
+
+            # get a move based on the bot's behavior and make it
+            move = bot1.get_move()
+            chess_board.make_move(move)
+
+        # else, it's the second bot's turn
+        else:
+
+            # get a move based on the bot's behavior and make it
+            move = bot2.get_move()
+            chess_board.make_move(move)
+
+        # if the captured piece was a king, end the game
+        if move.captured_piece.piece == Piece.KING:
+            game_running = False
+
+        # remove highlights
+        clear_board_highlights(tile_board)
+
+        # highlight the tiles where the last move was made
+        tile_board[move.from_location[0]][move.from_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+        tile_board[move.to_location[0]][move.to_location[1]].setFill(HIGHLIGHT_TILE_COLOR)
+
+        # redraw the board
+        reset_piece_board(piece_board)
+        piece_board = create_piece_board(tile_board, chess_board)
+        draw_piece_board(piece_board)
+
+        # redraw the captured pieces
+        reset_captured_pieces((captured_by_white, captured_by_black))
+        captured_by_white, captured_by_black = create_captured_pieces_rows(chess_board)
+        draw_captured_pieces((captured_by_white, captured_by_black))
+        
+    win.close()
+
+bot1 = RandomMoveBot(None, Color.WHITE)
+bot2 = RandomMoveBot(None, Color.BLACK)
+#two_bots_game(bot1, bot2)
+two_humans_game()

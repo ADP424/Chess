@@ -48,7 +48,7 @@ class ChessPiece:
 
 class Move:
     """
-    A playable piece for on a chess board.
+    A single move of a piece from one location to another.
 
     Attributes
     ----------
@@ -226,18 +226,18 @@ class ChessBoard:
             if row > 0 and col > 0 and self.board[row - 1][col - 1].color != Color.NONE and self.board[row - 1][col - 1].color != self.board[row][col].color:
                 moves.append(Move((row - 1, col - 1), (row, col), copy.deepcopy(self.board[row - 1][col - 1])))
 
-            # en passant
+            # en passant up-left
             elif row > 0 and col > 0 and self.last_move.to_location == (row, col - 1) and self.last_move.from_location == (row - 2, col - 1) and \
-                    self.board[row][col - 1].piece == Piece.PAWN and self.board[row - 1][col - 1].color != Color.NONE and self.board[row - 1][col - 1].color != self.board[row][col].color:
+                    self.board[row][col - 1].piece == Piece.PAWN and self.board[row][col - 1].color != Color.NONE and self.board[row][col - 1].color != self.board[row][col].color:
                 moves.append(Move((row - 1, col - 1), (row, col), copy.deepcopy(self.board[row][col - 1]), (row, col - 1)))
 
             # the pawn can move up-right diagonally if that captures a piece
-            if row > 0 and col < self.board_width - 1 and self.board[row - 1][col + 1].color != Color.NONE and self.board[row - 1][col - 1].color != self.board[row][col].color:
+            if row > 0 and col < self.board_width - 1 and self.board[row - 1][col + 1].color != Color.NONE and self.board[row - 1][col + 1].color != self.board[row][col].color:
                 moves.append(Move((row - 1, col + 1), (row, col), copy.deepcopy(self.board[row - 1][col + 1])))
 
-            # en passant
+            # en passant up-right
             elif row > 0 and col < self.board_width - 1 and self.last_move.to_location == (row, col + 1) and self.last_move.from_location == (row - 2, col + 1) and \
-                    self.board[row][col + 1].piece == Piece.PAWN and self.board[row - 1][col + 1].color != Color.NONE and self.board[row - 1][col + 1].color != self.board[row][col].color:
+                    self.board[row][col + 1].piece == Piece.PAWN and self.board[row][col + 1].color != Color.NONE and self.board[row][col + 1].color != self.board[row][col].color:
                 moves.append(Move((row - 1, col + 1), (row, col), copy.deepcopy(self.board[row][col + 1]), (row, col + 1)))
 
         # get black pawn moves
@@ -255,18 +255,18 @@ class ChessBoard:
             if row < self.board_height - 1 and col > 0 and self.board[row + 1][col - 1].color != Color.NONE and self.board[row + 1][col - 1].color != self.board[row][col].color:
                 moves.append(Move((row + 1, col - 1), (row, col), copy.deepcopy(self.board[row + 1][col - 1])))
 
-            # en passant
+            # en passant down-left
             elif row < self.board_height - 1 and col > 0 and self.last_move.to_location == (row, col - 1) and self.last_move.from_location == (row + 2, col - 1) and \
-                    self.board[row][col - 1].piece == Piece.PAWN and self.board[row + 1][col - 1].color != Color.NONE and self.board[row + 1][col - 1].color != self.board[row][col].color:
+                    self.board[row][col - 1].piece == Piece.PAWN and self.board[row][col - 1].color != Color.NONE and self.board[row][col - 1].color != self.board[row][col].color:
                 moves.append(Move((row + 1, col - 1), (row, col), copy.deepcopy(self.board[row][col - 1]), (row, col - 1)))
 
             # the pawn can move down-right diagonally if that captures a piece
-            if row < self.board_height - 1 and col < self.board_width - 1 and self.board[row + 1][col + 1].color != Color.NONE and self.board[row + 1][col - 1].color != self.board[row][col].color:
+            if row < self.board_height - 1 and col < self.board_width - 1 and self.board[row + 1][col + 1].color != Color.NONE and self.board[row + 1][col + 1].color != self.board[row][col].color:
                 moves.append(Move((row + 1, col + 1), (row, col), copy.deepcopy(self.board[row + 1][col + 1])))
 
-            # en passant
+            # en passant down-right
             elif row < self.board_height - 1 and col < self.board_width - 1 and self.last_move.to_location == (row, col + 1) and self.last_move.from_location == (row + 2, col + 1) and \
-                    self.board[row][col + 1].piece == Piece.PAWN and self.board[row + 1][col + 1].color != Color.NONE and self.board[row + 1][col + 1].color != self.board[row][col].color:
+                    self.board[row][col + 1].piece == Piece.PAWN and self.board[row][col + 1].color != Color.NONE and self.board[row][col + 1].color != self.board[row][col].color:
                 moves.append(Move((row + 1, col + 1), (row, col), copy.deepcopy(self.board[row][col + 1]), (row, col + 1)))
 
         return moves
@@ -652,49 +652,3 @@ class ChessBoard:
                     elif piece.piece == Piece.KING:
                         print(" ♚ ", end="")
             print()
-
-#########################################################################################################################################################################
-################################################################################# GAME ##################################################################################
-#########################################################################################################################################################################
-
-board = [
-    [ChessPiece(Piece.ROOK, Color.BLACK), ChessPiece(Piece.KNIGHT, Color.BLACK), ChessPiece(Piece.BISHOP, Color.BLACK), ChessPiece(Piece.QUEEN, Color.BLACK), 
-    ChessPiece(Piece.KING, Color.BLACK), ChessPiece(Piece.BISHOP, Color.BLACK), ChessPiece(Piece.KNIGHT, Color.BLACK), ChessPiece(Piece.ROOK, Color.BLACK)],
-
-    [ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK),
-    ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK), ChessPiece(Piece.PAWN, Color.BLACK)],
-
-    [ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(),
-    ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()],
-    
-    [ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(),
-    ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()],
-    
-    [ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(),
-    ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()],
-    
-    [ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece(),
-    ChessPiece(), ChessPiece(), ChessPiece(), ChessPiece()],
-
-    [ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE),
-    ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE), ChessPiece(Piece.PAWN, Color.WHITE)],
-
-    [ChessPiece(Piece.ROOK, Color.WHITE), ChessPiece(Piece.KNIGHT, Color.WHITE), ChessPiece(Piece.BISHOP, Color.WHITE), ChessPiece(Piece.QUEEN, Color.WHITE), 
-    ChessPiece(Piece.KING, Color.WHITE), ChessPiece(Piece.BISHOP, Color.WHITE), ChessPiece(Piece.KNIGHT, Color.WHITE), ChessPiece(Piece.ROOK, Color.WHITE)],
-]
-
-board[0][1] = ChessPiece()
-board[0][2] = ChessPiece()
-board[0][3] = ChessPiece()
-board[0][5] = ChessPiece()
-board[0][6] = ChessPiece()
-
-chess_board = ChessBoard(board=board)
-chess_board.print_board()
-
-moves = chess_board.find_legal_moves(0, 4)
-for move in moves:
-    print(move.from_location, "-->", move.to_location)
-
-chess_board.make_move(moves[2])
-chess_board.print_board()
