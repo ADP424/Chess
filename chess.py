@@ -604,6 +604,11 @@ class ChessBoard:
             self.board[move.from_location[0]][move.from_location[1]].has_moved = True
             self.board[move.to_location[0]][move.to_location[1]] = self.board[move.from_location[0]][move.from_location[1]]
             self.board[move.from_location[0]][move.from_location[1]] = ChessPiece()
+
+            # if the piece was a pawn, and it just reached the end, transform it into a queen
+            if self.board[move.to_location[0]][move.to_location[1]].piece == Piece.PAWN and \
+               move.to_location[0] == 0 or move.to_location[0] == self.board_height - 1:
+                self.board[move.to_location[0]][move.to_location[1]] = ChessPiece(Piece.QUEEN, self.board[move.to_location[0]][move.to_location[1]].color)
         
         # add the move to the moves list, set the last move equal to it, and increment curr_player
         self.move_list.append(copy.deepcopy(move))
